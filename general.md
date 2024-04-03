@@ -214,18 +214,17 @@ The CORS mechanism involves two types of requests: simple requests and preflight
 
 ## Simple Requests:
 
-   * Simple requests are those that meet certain criteria, such as being HTTP GET, HEAD, or POST requests with only certain content types (e.g., text/plain, application/x-www-form-urlencoded, multipart/form-data).
-   * For simple requests, the browser automatically includes an Origin header in the request, indicating the origin from which the request originated.
-   * The server then responds with appropriate CORS headers, such as Access-Control-Allow-Origin, to indicate whether the request is allowed.
-
+- Simple requests are those that meet certain criteria, such as being HTTP GET, HEAD, or POST requests with only certain content types (e.g., text/plain, application/x-www-form-urlencoded, multipart/form-data).
+- For simple requests, the browser automatically includes an Origin header in the request, indicating the origin from which the request originated.
+- The server then responds with appropriate CORS headers, such as Access-Control-Allow-Origin, to indicate whether the request is allowed.
 
 ## Preflighted Requests:
 
-   * Preflighted requests are those that do not meet the criteria for simple requests, typically due to using non-standard request methods (e.g., PUT, DELETE) or custom headers.
-   * Before making the actual request, the browser sends an OPTIONS request (preflight request) to the server to determine whether the actual request is allowed.
-   * The preflight request includes an Origin header indicating the origin of the request, as well as additional headers such as Access-Control-Request-Method and Access-Control-Request-Headers, specifying the intended method and headers for the actual request.
-   * The server responds to the preflight request with appropriate CORS headers, including Access-Control-Allow-Origin, Access-Control-Allow-Methods, and Access-Control-Allow-Headers, indicating whether the actual request is allowed.
-   * If the server approves the preflight request, the browser proceeds to make the actual request. Otherwise, it generates an error indicating that the request is not allowed due to CORS restrictions.
+- Preflighted requests are those that do not meet the criteria for simple requests, typically due to using non-standard request methods (e.g., PUT, DELETE) or custom headers.
+- Before making the actual request, the browser sends an OPTIONS request (preflight request) to the server to determine whether the actual request is allowed.
+- The preflight request includes an Origin header indicating the origin of the request, as well as additional headers such as Access-Control-Request-Method and Access-Control-Request-Headers, specifying the intended method and headers for the actual request.
+- The server responds to the preflight request with appropriate CORS headers, including Access-Control-Allow-Origin, Access-Control-Allow-Methods, and Access-Control-Allow-Headers, indicating whether the actual request is allowed.
+- If the server approves the preflight request, the browser proceeds to make the actual request. Otherwise, it generates an error indicating that the request is not allowed due to CORS restrictions.
 
 In summary, CORS is a security feature implemented by web browsers to control access to resources across different origins. Preflighted requests are used for non-simple requests to determine whether the actual request is allowed, and they involve an initial OPTIONS request to the server before making the actual request.
 
@@ -248,6 +247,47 @@ So, in summary:
 For simple requests, the browser adds the Origin header automatically, and the server responds accordingly.
 For non-simple (preflighted) requests, the browser first sends an OPTIONS request to check if the actual request is allowed, and then, if approved, sends the actual request.
 ```
+
+# CSRF (Cross-Site Request Forgery):
+
+CSRF (Cross-Site Request Forgery) is a type of web security vulnerability that occurs when an attacker tricks a user's browser into making unintended and unauthorized requests to a web application. CSRF attacks typically target state-changing actions, such as modifying account settings or making transactions, by exploiting the trust that a website has in a user's browser.
+
+Here's a simple example to illustrate how a CSRF attack works:
+
+1. Scenario Setup:
+
+   - Let's say a user is logged into their online banking account, which is vulnerable to CSRF attacks.
+
+   * The banking website allows users to transfer money between accounts by submitting a form with the destination account number and the amount to transfer.
+   * The website verifies the user's session to authenticate the transfer request.
+
+2. Crafting the Attack:
+
+   - An attacker creates a malicious website or sends a phishing email to the victim, enticing them to visit a page controlled by the attacker.
+   - The attacker's page contains hidden form elements that mimic the structure of the transfer form on the banking website.
+   - These hidden form elements automatically submit a transfer request to the banking website without the user's knowledge.
+
+3. Victim Interaction:
+
+   - The victim, who is logged into their banking account in another browser tab or session, visits the attacker's page either willingly or unknowingly (through a phishing email, for example).
+   - Since the victim is authenticated with the banking website, their browser automatically includes the session cookie for the banking site in the request to transfer money.
+
+4. Execution of Attack:
+
+   - The victim's browser, unaware of the attack, submits the hidden form elements containing the malicious transfer request to the banking website.
+   - Since the request includes the victim's session cookie, the banking website believes it's a legitimate request initiated by the authenticated user.
+   - As a result, the banking website processes the unauthorized transfer, moving funds from the victim's account to the attacker's account.
+
+5. Impact:
+
+   - The attacker successfully transfers money from the victim's account to their own without the victim's consent or knowledge.
+   - The victim may not realize the unauthorized transaction until later, causing financial loss and potential harm.
+
+To prevent CSRF attacks, web applications can implement countermeasures such as:
+
+- Using CSRF tokens: Unique tokens generated for each session or request that must be included with state-changing requests. These tokens are validated by the server to ensure that the request originated from a trusted source.
+- Implementing SameSite cookies: Setting the SameSite attribute on cookies to prevent them from being sent along with cross-origin requests, thereby reducing the risk of CSRF attacks.
+- Employing proper authentication and authorization mechanisms: Ensuring that state-changing requests require more than just session cookies for authentication, such as additional credentials or multi-step verification processes.
 
 # Redis
 
@@ -705,6 +745,52 @@ Ultimately, the choice between WebSocket and SSE depends on your specific projec
 ## Difference b/w websockets and SSE:
 
 https://rxdb.info/articles/websockets-sse-polling-webrtc-webtransport.html
+
+# GraphQL and REST APIs:
+
+GraphQL and REST APIs are both architectural styles for designing and implementing APIs, each with its own characteristics, advantages, and use cases. Here's a comparison between GraphQL and REST APIs:
+
+## GraphQL:
+
+1. Flexible Data Fetching: GraphQL allows clients to request only the data they need, specifying the shape of the response in the query. This reduces over-fetching and under-fetching of data, optimizing network bandwidth and improving performance.
+
+2. Single Endpoint: GraphQL APIs have a single endpoint that serves as an entry point for all queries, mutations, and subscriptions. This simplifies API interactions and reduces the number of network requests required to fetch data.
+
+3. Strongly Typed Schema: GraphQL APIs are defined by a strongly typed schema that specifies the structure of the API, including types, fields, and relationships. This enables type safety, static analysis, and auto-generated documentation, improving developer productivity and reducing runtime errors.
+
+4. Real-Time Updates: GraphQL supports real-time data updates and subscriptions, allowing clients to subscribe to changes in data and receive updates in real-time. This is useful for building interactive and collaborative applications that require live data updates.
+
+5. Client-Driven Data Fetching: With GraphQL, clients have control over data fetching and can specify their data requirements, enabling a tailored data fetching experience for different client platforms and devices.
+
+## REST API:
+
+1. Resource-Based: REST APIs are based on the concept of resources, each identified by a unique URI (Uniform Resource Identifier). Clients interact with resources using standard HTTP methods (GET, POST, PUT, DELETE) to perform CRUD (Create, Read, Update, Delete) operations.
+
+2. Stateless: REST APIs are stateless, meaning each request from a client contains all the information necessary for the server to fulfill it. This simplifies server-side logic and enables scalability by allowing requests to be processed independently.
+
+3. Caching: REST APIs leverage HTTP caching mechanisms, such as ETag headers and Last-Modified timestamps, to improve performance and reduce server load. Clients and intermediaries can cache responses and reuse them for subsequent requests.
+
+4. Widely Adopted: RESTful principles have been widely adopted and understood by developers, making it easier to build, consume, and integrate REST APIs with existing systems and tools.
+
+5. Uniform Interface: REST APIs provide a uniform interface between clients and servers, promoting loose coupling and interoperability. They use standard HTTP methods, status codes, and media types, making them accessible and predictable.
+
+### When to Use GraphQL:
+
+* Complex Data Requirements
+* Flexible Data Fetching
+* Real-Time Updates and Subscriptions
+* Client-Driven Data Fetching
+* Rapid Prototyping and Iteration
+
+### When to Use REST API:
+
+* Simple Data Requirements
+* Resource-Oriented Design
+* Compatibility and Interoperability
+* Caching and Performance Optimization
+* Widely Adopted and Understood
+
+In summary, GraphQL and REST APIs offer different approaches to building APIs, each suited for different use cases and development scenarios. The choice between GraphQL and REST depends on factors such as the complexity of your data model, the nature of your client-server interactions, and the preferences of your development team.
 
 # Consistent hashing:
 
