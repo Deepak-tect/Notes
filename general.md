@@ -1064,6 +1064,66 @@ Webhooks are a mechanism for enabling real-time communication between systems ov
 In summary, webhooks provide a powerful mechanism for enabling real-time communication between payment service providers and merchants, allowing merchants to receive timely notifications about payment events and automate various aspects of their business processes based on those events.
 
 
+# Concurrency Control in Distributed Transactions: 
+
+* Concurrency control mechanisms provide us with various concepts & implementations to ensure the execution of any transaction across any node doesn’t violate ACID or BASE (depending on database) properties causing inconsistency & mixup of data in the distributed systems.
+* Transactions in the distributed system are executed in “sets“, every set consists of various sub-transactions.
+* These sub-transactions across every node must be executed serially to maintain data integrity & the concurrency control mechanisms do this serial execution.
+
+## Types of Concurrency Control Mechanisms:
+
+There are 2 types of concurrency control mechanisms as shown below diagram:
+
+![Alt text](https://media.geeksforgeeks.org/wp-content/uploads/20230928165436/Concurrency-Control-Techniques-in-Distributed-Transaction-System.png)
+
+## 1. Pessimistic Concurrency Control (PCC):
+
+The Pessimistic Concurrency Control Mechanisms proceeds on assumption that, most of the transactions will try to access the same resource simultaneously. It’s basically used to prevent concurrent access to a shared resource and provide a system of acquiring a Lock on the data item before performing any operation.
+
+## 2. Optimistic Concurrency Control (OCC):
+
+* The problem with pessimistic concurrency control systems is that, if a transaction acquires a lock on a resource so that no other transactions can access it. This will result in reducing concurrency of the overall system.
+
+* The Optimistic Concurrency control techniques proceeds on the basis of assumption that, 0 or very few transactions will try to access a certain resource simultaneously. We can describe a system as FULLY OPTIMISTIC, if it uses No-Locks at all & checks for conflicts at commit time. 
+
+It has following 4-phases of operation:
+
+1. `Read Phase:` When a transaction begins, it reads the data while also logging the time-stamp at which data is read to verify for conflicts during the validation phase.
+
+2. `Execution Phase:` In this phase, the transaction executes all its operation like create, read, update or delete etc.
+
+3. `Validation Phase:` Before committing a transaction, a validation check is performed to ensure consistency by checking the last_updated timestamp with the one recorded at read_phase. If the timestamp matches, then the transaction will be allowed to be committed and hence proceed with the commit phase.
+
+4. `Commit phase:` During this phase, the transactions will either be committed or aborted, depending on the validation check performed during previous phase. If the timestamp matches, then transactions are committed else they’re aborted.
+
+### Optimistic Concurrency Control Methods:
+
+#### 1. Timestamp Based (OCC):
+
+In a timestamp based concurrency technique, each transaction in the system is assigned a unique timestamp which is taken as soon as the transaction begins, and its verified again during the commit phase. If there’s new updated timestamp from a different transaction then based on some policy defined by the System Adminstrator the transaction will either be restarted or aborted. But if the times stamp is same & never modified by any other transaction then it will be committed.
+
+#### 2. Multi-Version Concurrency Control (MVCC):
+In MVCC, every data item has multiple versions of itself. When a transaction starts, it reads the version that is valid at the start of the transaction. And when the transaction writes, it creates a new version of that specific data item. That way, every transaction can concurrently perform their operations.
+
+Example: In a banking system two or more user can transfer money without blocking each other simultaneously.
+
+A similar technique to this is : Immutable Data Structures. Every time a transaction performs a new operation, new data item will be created so that way transactions do not have to worry about consistency issues.
+
+
+## Conclusion
+
+The above mentioned concurrency methods are applicable in various scenarios. These methods help us maintain consistency, data integrity, improve reliability & maintain the proper flow of execution across different nodes in a distributed environment system where multiple transactions are executed simultaneously.
+
+1. Concurrency control is a mechanism put in place to take care of concurrent transaction execution.
+2. There are 2 types of concurrency mechanism: `Pessimistic Concurrency control methods, that are applicable for ACID database and the Optimistic Concurrency control methods, applicable for BASE database.`
+
+   * `Pessimistic Concurrency Control` methods are suitable for ACID databases where data consistency and integrity are paramount. They use locking mechanisms to prevent conflicts and maintain data integrity.
+
+   * `Optimistic Concurrency Control` methods are suitable for BASE databases where availability and scalability are prioritized. They allow transactions to proceed without locking and resolve conflicts during the commit phase, allowing for higher availability and concurrency.)
+
+3. These methods help us achieve a level of isolation, between concurrently executing transactions so they do not interfere with each other.
+4. The locking mechanism is one of the foundations of these methods that allows them to acquire a lock on the resource before performing any operation.
+
 # Indexing
 
 - Indexing is a database optimization technique used to improve the speed and efficiency of data retrieval operations, such as queries and searches.
