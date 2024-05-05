@@ -1,13 +1,13 @@
 public class InfoHandle implements Logger {
 
-    private Logger logger;
+    private Logger nextLogger;
 
     @Override
-    public Logger setNextLogger(Logger logger){
-        if (this.logger == null) {
-            this.logger = logger;
+    public Logger setNextLogger(Logger nextLogger){
+        if (this.nextLogger == null) {
+            this.nextLogger = nextLogger;
         } else {
-            this.logger.setNextLogger(logger);
+            this.nextLogger.setNextLogger(nextLogger);
         }
         return this;
     }
@@ -17,8 +17,8 @@ public class InfoHandle implements Logger {
         if(level == 1){
             System.out.println("Info: "+ message);
         }
-        else if(logger != null){
-            logger.log(level, message);
+        else if(nextLogger != null){
+            nextLogger.log(level, message);
         }
         else{
             System.out.println("Invalid level");
