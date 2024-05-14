@@ -5,6 +5,5 @@ public class Test {
         Coffee advCoffee = new ExtraMilk(new ExtraCream(simCoffee));
         System.out.println(advCoffee.description());
         System.out.println("Cost of coffee "+advCoffee.cost());
-
     }
 }
