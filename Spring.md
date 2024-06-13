@@ -60,3 +60,5 @@ Here are some key aspects of Maven:
 2. `Actions:` Maven uploads the packaged artifact to a remote repository, such as a company-wide repository manager or a public repository like Maven Central.
 
 3. `Usage:` This phase makes the project's artifact accessible to other developers and projects. It enables collaboration and ensures that the artifact is available for use in different environments.
+
+
