@@ -454,3 +454,85 @@ By implementing a comprehensive monitoring strategy using APM tools, robust logg
 * Lightweight Containers: Docker containers share the host OS kernel, making them more lightweight and faster to start compared to traditional virtual machines.
 * Resource Limits: Docker allows setting resource limits (CPU, memory) for containers, ensuring optimal resource usage and preventing any single container from consuming all available resources.
 
+
+# SSE code:
+
+```js
+const express = require('express');
+const app = express();
+const cors = require('cors');
+
+app.use(cors());
+app.use(express.json()); // Middleware to parse JSON requests
+
+let clients = [];
+
+// Middleware for SSE connections
+app.use('/events', (req, res, next) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  next();
+});
+
+// SSE endpoint to handle client connections
+app.get('/events', (req, res) => {
+  console.log('Client connected to SSE');
+  res.write('event: message\n');
+  res.write('data: Hello, client!\n\n');
+
+  clients.push(res);
+
+  req.on('close', () => {
+    console.log('Client disconnected from SSE');
+    clients = clients.filter(client => client !== res);
+  });
+});
+
+// Simulate periodic updates using setInterval
+setInterval(() => {
+  const newData = {
+    time: new Date().toLocaleTimeString(),
+    message: 'Periodic update triggered'
+  };
+
+  clients.forEach(client => {
+    client.write('event: update\n');
+    client.write(`data: ${JSON.stringify(newData)}\n\n`);
+  });
+}, 5000); // Update every 5 seconds
+
+// Regular HTTP endpoint for booking tickets
+app.post('/book-ticket', async (req, res) => {
+  try {
+    // Simulated asynchronous booking process
+    const bookingDetails = await processBooking(req.body.userId, req.body.ticketDetails);
+    res.status(200).json(bookingDetails);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// Simulated asynchronous booking process
+async function processBooking(userId, ticketDetails) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      const confirmationCode = Math.random().toString(36).substring(7).toUpperCase();
+      const bookingDetails = {
+        userId,
+        ticketDetails,
+        confirmationCode,
+        time: new Date().toLocaleTimeString()
+      };
+      resolve(bookingDetails);
+    }, 1000); // Simulate delay for asynchronous operation
+  });
+}
+
+// Start the server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
+
+```
