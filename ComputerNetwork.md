@@ -239,3 +239,136 @@ Overall, HTTPS provides a secure and encrypted channel for communication between
 13. `Data Transfer:` All data transmitted between the client and server is encrypted using the shared session key, providing confidentiality. Additionally, cryptographic hashes and digital signatures may be used to ensure data integrity.
 
 By following this flow, HTTPS ensures secure and encrypted communication between the client and server, protecting sensitive information from interception, tampering, and impersonation.
+
+
+# SSL/TLS
+
+SSL (Secure Sockets Layer) and TLS (Transport Layer Security) are cryptographic protocols designed to provide secure communication over a computer network. Both protocols ensure that data transmitted between a client (e.g., a web browser) and a server remains private and integral.
+
+## Key Features of SSL/TLS
+
+1. **Encryption**:
+   - Ensures that the data being transmitted is encrypted, making it unreadable to anyone who might intercept it.
+   - Uses symmetric encryption for the actual data transfer, which is fast and efficient.
+
+2. **Authentication**:
+   - Verifies the identity of the communicating parties.
+   - Uses asymmetric encryption (public/private key pairs) to establish a secure connection and exchange a symmetric encryption key.
+
+3. **Data Integrity**:
+   - Ensures that the data has not been altered during transmission.
+   - Uses message authentication codes (MACs) to check the integrity of the transmitted data.
+
+## Differences Between SSL and TLS
+
+- **SSL**: An older protocol that has been deprecated due to security vulnerabilities. It is no longer considered secure.
+- **TLS**: The successor to SSL. It provides improved security and performance. TLS 1.2 and TLS 1.3 are the most widely used versions.
+
+## How SSL/TLS Works
+
+1. **Handshake Process**:
+   - The client and server establish a connection.
+   - They exchange cryptographic keys and agree on the encryption methods to be used.
+   - The server presents its digital certificate, which the client verifies using a certificate authority (CA).
+
+2. **Session Encryption**:
+   - Once the handshake is complete, the client and server use symmetric encryption to securely transmit data.
+   - The encryption key used for the session is derived from the handshake process.
+
+## Digital Certificates
+
+- **Digital Certificate**: A digital document used to prove the ownership of a public key. It includes information about the key, its owner's identity, and the digital signature of an entity that has verified the certificate's contents.
+- **Certificate Authority (CA)**: An entity that issues digital certificates. It acts as a trusted third party, verifying the identities of the entities it certifies.
+
+## Common Uses
+
+- **HTTPS**: Secure web browsing. Websites use TLS to secure communications between the server and the client's browser.
+- **Email**: Secure email transmission using protocols like SMTPS, IMAPS, and POP3S.
+- **VPNs**: Secure remote access to networks using TLS-based VPN protocols.
+
+## Summary
+
+SSL and TLS are protocols used to secure communications over a network by providing encryption, authentication, and data integrity. TLS is the modern, more secure version that has replaced SSL. These protocols are fundamental to the security of internet communications, ensuring that data transmitted between clients and servers is kept confidential and unaltered.
+
+
+# How SSH Works
+
+SSH (Secure Shell) is a protocol used to securely connect to remote systems over a network. It provides a secure channel over an unsecured network by using encryption, ensuring the confidentiality and integrity of data transmitted between the client and server.
+
+## Key Features of SSH
+
+1. **Secure Authentication**:
+   - SSH supports various authentication methods, including password-based and key-based authentication.
+   - Key-based authentication uses public-private key pairs, providing stronger security compared to passwords.
+
+2. **Encryption**:
+   - All data transmitted over an SSH connection is encrypted, preventing eavesdropping and interception.
+   - Common encryption algorithms used include AES, ChaCha20, and 3DES.
+
+3. **Data Integrity**:
+   - Ensures that data has not been tampered with during transmission.
+   - Uses cryptographic hash functions like SHA-2 to verify data integrity.
+
+4. **Port Forwarding**:
+   - SSH can tunnel other network protocols, allowing secure access to services behind firewalls or on remote networks.
+   - Supports both local and remote port forwarding.
+
+## How SSH Works
+
+### 1. Establishing a Connection
+
+1. **Client Initiates Connection**:
+   - The client sends a connection request to the SSH server on the remote system, typically using port 22.
+
+2. **Server Responds**:
+   - The server responds with its public key and a session ID.
+
+3. **Client Verifies Server**:
+   - The client checks the server's public key against its known hosts list to verify the server's identity.
+   - If the key matches, the client proceeds; otherwise, it may warn the user or terminate the connection.
+
+### 2. Key Exchange and Encryption
+
+1. **Key Exchange**:
+   - The client and server use a key exchange algorithm (e.g., Diffie-Hellman) to securely generate a shared secret key.
+   - This shared key is used to encrypt the session.
+
+2. **Encryption Setup**:
+   - Both parties agree on the encryption algorithms and cryptographic parameters to use for the session.
+
+### 3. Authentication
+
+1. **User Authentication**:
+   - The client authenticates to the server using the chosen method (password-based or key-based).
+   - In key-based authentication, the client proves possession of the private key without sending it over the network.
+
+### 4. Secure Communication
+
+1. **Encrypted Session**:
+   - Once authenticated, the client and server can communicate securely using the established encryption.
+   - All data sent over the SSH connection is encrypted, ensuring confidentiality.
+
+### Example: Key-Based Authentication
+
+1. **Generate Key Pair**:
+   - The user generates an SSH key pair (public and private keys) using a tool like `ssh-keygen`.
+
+   ```sh
+   ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+
+2. Copy Public Key to Server:
+
+The user copies the public key to the remote server, adding it to the ~/.ssh/authorized_keys file.
+```shell
+ssh-copy-id user@remote_host
+```
+
+3. Connect to Server:
+
+The user connects to the server using the private key for authentication.
+```shell
+ssh user@remote_host
+```
+
+### Summary
+SSH provides a secure method for remote system access by encrypting data and using strong authentication methods. It protects against eavesdropping, tampering, and other security threats. SSH is widely used for secure administration, file transfers, and tunneling services over a network.
