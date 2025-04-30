@@ -321,8 +321,176 @@ spec:
 ## Conclusion
 Multi-container pods are useful for complex applications needing tightly coupled services. Use them when necessary but avoid unnecessary complexity.
 
+# Kubernetes DaemonSet and CronJob
+
+## DaemonSet
+
+### Overview
+A **DaemonSet** ensures that a specific pod runs on all (or some) nodes in a Kubernetes cluster. It is commonly used for logging, monitoring, and network-related tasks.
+
+### Use Cases
+- Running **log collection agents** (e.g., Fluentd, Filebeat) on all nodes.
+- Deploying **monitoring agents** (e.g., Prometheus Node Exporter, Datadog agents).
+- Enabling **network management** tools (e.g., CNI plugins, kube-proxy).
+- Running **system-level daemons** that need to exist on every node.
+
+### Example YAML for DaemonSet
+```yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: node-monitor
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: node-monitor
+  template:
+    metadata:
+      labels:
+        app: node-monitor
+    spec:
+      containers:
+      - name: node-monitor
+        image: prom/node-exporter
+        ports:
+        - containerPort: 9100
+```
+
+---
+
+## CronJob
+
+### Overview
+A **CronJob** is a Kubernetes resource used to run scheduled tasks, similar to cron jobs in Linux. It is useful for periodic tasks such as backups, report generation, and data synchronization.
+
+### Use Cases
+- **Automated backups** of databases or application data.
+- **Cleanup jobs** for removing stale data.
+- **Scheduled report generation**.
+- **Sending periodic notifications or alerts**.
+
+### Example YAML for CronJob
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: database-backup
+  namespace: maintenance
+spec:
+  schedule: "0 3 * * *" # Runs daily at 3 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup
+            image: mybackup:latest
+            args:
+            - "/bin/sh"
+            - "-c"
+            - "pg_dump mydb > /backup/mydb.sql"
+          restartPolicy: OnFailure
+```
+
+---
+
+## Argo Cron Workflow vs Kubernetes CronJob
+
+Both **Argo Cron Workflow** and **Kubernetes CronJob** are used for scheduling tasks in Kubernetes, but they serve different purposes and have distinct features.
+
+### **1. Kubernetes CronJob**
+A **CronJob** in Kubernetes runs scheduled jobs, similar to a Linux cron job. It creates **Job** objects that execute at specified intervals.
+
+#### **Key Features**
+- Uses the standard **cron syntax** for scheduling.
+- Creates a **Job** object when the schedule is triggered.
+- Best for **simple scheduled tasks**, like database backups, log cleanup, and periodic reports.
+- Limited to running **single-container jobs** without workflows.
+
+#### **Example YAML (Kubernetes CronJob)**
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: database-backup
+spec:
+  schedule: "0 3 * * *" # Runs daily at 3 AM
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup
+            image: mybackup:latest
+            args: ["pg_dump mydb > /backup/mydb.sql"]
+          restartPolicy: OnFailure
+```
+
+---
+
+### **2. Argo Cron Workflow**
+An **Argo Cron Workflow** is part of **Argo Workflows**, an advanced workflow engine for Kubernetes that allows defining **multi-step workflows**.
+
+#### **Key Features**
+- Designed for **complex, multi-step workflows**.
+- Can define **DAGs (Directed Acyclic Graphs)** for dependencies between steps.
+- Supports **artifacts, parameters, and conditional execution**.
+- Provides **workflow templates** for reusable execution logic.
+- Uses the **Argo Workflow Controller** instead of the Kubernetes Job Controller.
+
+#### **Example YAML (Argo Cron Workflow)**
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: argo-db-backup
+spec:
+  schedule: "0 3 * * *" # Runs daily at 3 AM
+  workflowSpec:
+    entrypoint: backup
+    templates:
+    - name: backup
+      steps:
+      - - name: dump-db
+          template: dump-db-step
+    - name: dump-db-step
+      container:
+        image: mybackup:latest
+        command: ["/bin/sh", "-c"]
+        args: ["pg_dump mydb > /backup/mydb.sql"]
+```
+
+---
+
+## **Key Differences**
+| Feature                | Kubernetes CronJob | Argo Cron Workflow |
+|------------------------|-------------------|--------------------|
+| **Use Case**           | Simple scheduled tasks | Complex workflows |
+| **Multi-Step Execution** | ❌ No | ✅ Yes (DAG support) |
+| **Dependency Handling** | ❌ No | ✅ Yes |
+| **Artifact Support**   | ❌ No | ✅ Yes |
+| **Parallel Execution** | ❌ Limited | ✅ Fully Supported |
+| **UI for Monitoring**  | ❌ No | ✅ Yes (Argo UI) |
+
+---
+
+## **Which One to Use?**
+- ✅ **Use Kubernetes CronJob** if you need a **single-task scheduled job** like a backup or log rotation.
+- ✅ **Use Argo Cron Workflow** if you need **multi-step workflows, dependencies, or advanced automation**.
+
+## Conclusion
+- Use **DaemonSet** when you need a pod on every (or specific) node.
+- Use **CronJob** for scheduled, periodic tasks.
+- Use **Argo Cron Workflow** for complex workflows with multiple steps and dependencies.
+- Both resources help automate and manage Kubernetes workloads efficiently.
 
 
 
+# Cheat sheet
+```sh
+1. Kubect config use-context <cluster-name>
+
+```
 
 

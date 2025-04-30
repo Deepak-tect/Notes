@@ -1128,3 +1128,46 @@ The above mentioned concurrency methods are applicable in various scenarios. The
 
 - Indexing is a database optimization technique used to improve the speed and efficiency of data retrieval operations, such as queries and searches.
 - Indexing plays a crucial role in system design by enhancing query performance, reducing latency, and optimizing resource utilization.
+
+
+
+
+# 🧠 NAT (Network Address Translation) - Notes
+
+## 📌 Why NAT?
+
+- **IPv4 address exhaustion**: Public IPv4 addresses are limited; NAT allows multiple devices in a private network to share a single public IP.
+- **Security**: NAT hides internal IP addresses from the external network, offering a layer of protection.
+- **Network flexibility**: Enables private addressing inside networks without conflicts with global IPs.
+- **Internet access for private networks**: Devices with private IPs can access the internet via a NAT-enabled router.
+
+---
+
+## 📖 What is NAT?
+
+- **Definition**: NAT is a method used by routers to **modify IP address information** in the packet headers while routing traffic between private (local) and public (global) networks.
+- It maps **private IP addresses** to **public IP addresses** and vice versa.
+
+---
+
+## ⚙️ How NAT Works
+
+When a device in a private network sends a packet to the internet:
+
+1. The router replaces the **source private IP** with its own **public IP**.
+2. It keeps a **translation table** (mapping between internal and external IPs/ports).
+3. When a response comes back, the router uses the table to forward it to the correct internal device.
+
+---
+
+## 🧩 Types of NAT
+
+### 1. Static NAT
+- One-to-one mapping between a private IP and a public IP.
+
+✅ **Advantage**: Easy to configure; useful for hosting services.  
+❌ **Disadvantage**
+
+
+
+
