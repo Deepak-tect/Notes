@@ -556,3 +556,678 @@ Some applications and use cases **require access to the real client IP**, not th
 | **Launch Template**| Instance config (AMI, instance type, etc.) |
 | **Target Group**   | Load balancer grouping of instances |
 
+
+# 💾 AWS EC2 Instance Storage 
+
+## 📘 What is EC2 Instance Storage?
+
+- **Instance store (a.k.a. ephemeral storage)** is **temporary block-level storage** for EC2 instances.
+- It is **physically attached to the host server** and provides **high-speed, low-latency** storage.
+- Data persists **only during the instance lifetime** — **deleted on stop, terminate, or failover**.
+
+---
+
+## 🧩 Types of Storage in EC2
+
+| Type               | Description                                              |
+|--------------------|----------------------------------------------------------|
+| **Instance Store** | Temporary, high-performance, physically-attached storage |
+| **EBS (Elastic Block Store)** | Persistent, network-attached block storage        |
+
+> 🔸 Note: Not all EC2 instance types come with instance store volumes.
+
+---
+
+## ⚙️ Use Cases of Instance Store
+
+- High-speed temporary storage needs:
+  - Buffer/cache
+  - Scratch data
+  - Temporary processing (e.g., video rendering)
+  - No need for persistence after shutdown
+
+---
+
+## ✅ Advantages of Instance Store
+
+- ⚡ **Very fast** (low latency, high IOPS)
+- 💸 **No additional cost** (included with instance)
+- 📉 Lower overhead than EBS (no network latency)
+
+---
+
+## ❌ Disadvantages of Instance Store
+
+- 💀 **Data loss on stop/terminate** (non-persistent)
+- 🔁 No snapshot support or easy backup
+- 🧱 Tied to instance lifecycle — **cannot be detached/moved**
+- 📦 Limited instance types support it (e.g., i3, d2, h1)
+
+---
+
+## 🔧 Overcoming Limitations
+
+| Limitation             | Workaround                                                |
+|------------------------|------------------------------------------------------------|
+| No persistence         | Use **EBS volumes** for persistent storage                 |
+| No snapshot/backup     | Sync to **S3** or create backup scripts                    |
+| Data loss on reboot    | Store checkpoints or interim state in persistent storage   |
+| Limited flexibility    | Combine with EBS or S3 for hybrid approach                 |
+
+---
+
+## 💡 Instance Store vs EBS
+
+| Feature                | Instance Store       | EBS                          |
+|------------------------|----------------------|-------------------------------|
+| **Persistence**        | ❌ Lost on stop       | ✅ Persistent                  |
+| **Performance**        | ⚡ Very fast (local)  | 🚀 Fast but network-attached  |
+| **Attachable**         | ❌ Fixed to instance  | ✅ Can be attached/detached    |
+| **Snapshots**          | ❌ Not supported      | ✅ Supported                   |
+| **Cost**               | ✅ Free (included)    | 💸 Charged separately          |
+
+---
+
+## What About Instance Store?
+* Instance store is not included by default.
+
+* Only certain instance types (like i3, d2, h1, c5d, etc.) support instance store volumes.
+
+* Even in those types, you need to explicitly configure and mount the instance store if you want to use it.
+
+## How to Check Where You're Saving:
+Run lsblk or df -h in the EC2 terminal:
+
+* EBS volumes usually appear as /dev/xvda, /dev/nvme0n1
+
+* Instance store devices might be /dev/nvme1n1, /dev/sd*, and mounted separately
+
+## 🧠 Summary for Interviews
+
+- Instance store = **ephemeral, high-speed**, **temporary disk** tied to the EC2 host.
+- Best for **temporary** workloads, **scratch data**, or **buffer/cache** layers.
+- Use **EBS or S3** for persistence, backups, and durability.
+
+
+# 💾 Amazon EBS (Elastic Block Store)
+
+## 📘 What is EBS?
+
+- **EBS** is durable, block-level storage for EC2 instances.
+- It behaves like a virtual hard disk and can store **OS, applications, and data**.
+- It is **persistent**, meaning the data survives even when the instance stops or terminates (if not deleted explicitly).
+
+---
+
+## ✅ Advantages of EBS
+
+- 🧱 **Persistent**: Data is retained across reboots/stops.
+- ⚙️ **Flexible**: Can attach/detach volumes from instances.
+- 🚀 **Scalable**: Resize volumes without downtime.
+- 🔐 **Secure**: Supports encryption at rest and in transit.
+- ♻️ **Backup Friendly**: Create **snapshots** and restore them anytime.
+- 📈 **Performance Options**: Choose volume types based on throughput (gp3, io1, st1, etc.)
+
+---
+
+## ❌ Disadvantages of EBS
+
+- 📡 **Network Dependent**: It’s a network-attached storage, so performance depends on bandwidth and instance type.
+- 💸 **Charged Separately**: You pay for EBS volume usage independently of EC2.
+- ❗ **AZ Locked**: Can only be attached to instances in the **same Availability Zone**.
+- 🧼 **Manual Cleanup**: Volumes persist even after instance termination unless “Delete on termination” is checked.
+
+---
+
+## 🪜 Steps to Set Up & Attach EBS Volume
+
+### 🔧 1. Create EBS Volume
+- Go to **EC2 Console → Volumes → Create Volume**
+- Choose:
+  - Volume Type (e.g., gp3)
+  - Size (e.g., 20 GiB)
+  - Availability Zone (same as the instance)
+  - Encryption (optional)
+
+### 🔗 2. Attach to EC2 Instance
+- Go to **Actions → Attach Volume**
+- Select the instance ID
+- Specify device name (e.g., `/dev/xvdf`)
+
+### 📦 3. Format & Mount in EC2
+SSH into your instance and run:
+```bash
+# Check volume
+lsblk
+
+# Format the new volume
+sudo mkfs -t ext4 /dev/xvdf
+
+# Create mount point
+sudo mkdir /data
+
+# Mount the volume
+sudo mount /dev/xvdf /data
+
+# Make it persistent after reboot
+echo "/dev/xvdf /data ext4 defaults,nofail 0 2" | sudo tee -a /etc/fstab
+
+```
+### 💾 Amazon EBS (Elastic Block Store) - Notes
+
+## 📘 What is EBS?
+
+- **EBS** is durable, block-level storage for EC2 instances.
+- It behaves like a virtual hard disk and can store **OS, applications, and data**.
+- It is **persistent**, meaning the data survives even when the instance stops or terminates (if not deleted explicitly).
+
+---
+
+## ✅ Advantages of EBS
+
+- 🧱 **Persistent**: Data is retained across reboots/stops.
+- ⚙️ **Flexible**: Can attach/detach volumes from instances.
+- 🚀 **Scalable**: Resize volumes without downtime.
+- 🔐 **Secure**: Supports encryption at rest and in transit.
+- ♻️ **Backup Friendly**: Create **snapshots** and restore them anytime.
+- 📈 **Performance Options**: Choose volume types based on throughput (gp3, io1, st1, etc.)
+
+---
+
+## ❌ Disadvantages of EBS
+
+- 📡 **Network Dependent**: It’s a network-attached storage, so performance depends on bandwidth and instance type.
+- 💸 **Charged Separately**: You pay for EBS volume usage independently of EC2.
+- ❗ **AZ Locked**: Can only be attached to instances in the **same Availability Zone**.
+- 🧼 **Manual Cleanup**: Volumes persist even after instance termination unless “Delete on termination” is checked.
+
+---
+
+## 🪜 Steps to Set Up & Attach EBS Volume
+
+### 🔧 1. Create EBS Volume
+- Go to **EC2 Console → Volumes → Create Volume**
+- Choose:
+  - Volume Type (e.g., gp3)
+  - Size (e.g., 20 GiB)
+  - Availability Zone (same as the instance)
+  - Encryption (optional)
+
+### 🔗 2. Attach to EC2 Instance
+- Go to **Actions → Attach Volume**
+- Select the instance ID
+- Specify device name (e.g., `/dev/xvdf`)
+
+### 📦 3. Format & Mount in EC2
+SSH into your instance and run:
+```bash
+# Check volume
+lsblk
+
+# Format the new volume
+sudo mkfs -t ext4 /dev/xvdf
+
+# Create mount point
+sudo mkdir /data
+
+# Mount the volume
+sudo mount /dev/xvdf /data
+
+# Make it persistent after reboot
+echo "/dev/xvdf /data ext4 defaults,nofail 0 2" | sudo tee -a /etc/fstab
+```
+
+## 📏 Steps to Resize EBS Volume
+### 🧱 A. Resize from AWS Console
+1. Go to EC2 → Volumes
+
+2. Select your volume → Click Modify Volume
+
+3. Increase size (e.g., 20 → 30 GiB)
+
+4. Click Modify → Confirm
+
+### 🖥️ B. Extend File System (On EC2)
+SSH into your instance and run:
+```sh
+# Check the new size is visible
+lsblk
+
+# Extend the partition (if needed for older volumes)
+sudo growpart /dev/xvda 1   # only if using partitions
+
+# Resize filesystem
+# For ext4:
+sudo resize2fs /dev/xvda1
+
+# For xfs:
+sudo xfs_growfs -d /
+
+```
+
+## 📦 Resize Root EBS Volume
+Steps:
+1. Follow Modify Volume steps above to resize root volume.
+
+2. SSH into EC2 and use lsblk to verify volume size.
+
+3. Resize file system as shown above (use xfs_growfs or resize2fs).
+
+   * For AMIs using xfs (common in Amazon Linux 2, RHEL), use xfs_growfs.
+   * For ext4, use resize2fs.
+
+### 🧠 Quick Recap for Interviews
+| Feature     | EBS                                   |
+| ----------- | ------------------------------------- |
+| Persistence | ✅ Yes (across reboot/stop/start)      |
+| Backup      | ✅ Snapshots supported                 |
+| Resizing    | ✅ Online resizing supported           |
+| Attachment  | ✅ Attach/detach to/from EC2 instances |
+| Scope       | Limited to same Availability Zone     |
+| Use Case    | OS, databases, app data, logs         |
+
+
+# 🐧 Linux Basics for Working with Amazon EBS
+
+This note covers essential Linux concepts and commands needed to manage and use EBS volumes with EC2 instances — explained in **simple language** with **real-world analogies**.
+
+---
+
+## 📦 1. What are Block Devices?
+
+- A **block device** is a type of storage (like a hard disk, SSD, EBS volume) that stores data in small fixed-size blocks.
+- Examples:
+  - `/dev/xvda` → Root EBS volume
+  - `/dev/xvdf` → Attached data EBS volume
+
+🔎 To see all block devices:
+```bash
+lsblk
+```
+🧠 Analogy: Think of it as a bookshelf with books (blocks) you can read/write individually.
+
+## 🗂️ 2. Mounting a Volume
+
+### Why mount?
+Linux cannot use a volume until it is mounted (linked) to a folder.
+
+### Mount Steps:
+1. Format the volume (like setting up a filing system).
+
+2. Create a mount point (like creating a folder where volume contents appear).
+
+3. Mount the volume to the folder.
+
+🛠 Example:
+```sh
+sudo mkfs -t ext4 /dev/xvdf       # Format volume
+sudo mkdir /data                  # Create mount folder
+sudo mount /dev/xvdf /data        # Mount volume
+```
+🔍 Check success:
+```sh
+df -h        # Shows mounted filesystems
+```
+
+## 🔁 3. Make Mount Persistent (After Reboot)
+Linux “forgets” manual mounts after reboot.
+
+To keep it mounted:
+
+1. Edit the /etc/fstab file.
+
+2. Add an entry like:
+
+```sh 
+/dev/xvdf  /data  ext4  defaults,nofail  0  2
+```
+🧠 Analogy: Think of /etc/fstab as your "Startup To-Do List" for disks.
+
+## 📁 4. Understanding Device Paths
+* Linux identifies storage using paths like /dev/xvda, /dev/nvme1n1.
+
+* These may vary depending on the instance type (e.g., NVMe on newer instances).
+
+```sh
+lsblk        # List devices
+df -h        # Show mounted ones
+```
+
+## 🧱 5. File Systems
+* File system is a method to organize and store files.
+
+* Common types: ext4, xfs
+
+To format a volume:
+```sh
+sudo mkfs -t ext4 /dev/xvdf
+```
+
+## 📌 6. Mount Point
+* A mount point is just a folder (like /data, /mnt/storage) where your volume will appear.
+
+To create one:
+```sh
+sudo mkdir /data
+```
+
+
+## 🔓 7. Permissions & Ownership
+To allow users to access the volume:
+```sh
+sudo chown ec2-user:ec2-user /data   # Change ownership to your user
+```
+To set permissions:
+```sh
+sudo chmod 755 /data
+
+```
+
+## 🧠Useful Linux Commands for EBS
+
+| Command                          | Description                                           |
+|----------------------------------|-------------------------------------------------------|
+| `lsblk`                          | List block devices                                    |
+| `df -h`                          | View mounted filesystems                              |
+| `mkfs -t ext4`                   | Format a volume                                       |
+| `mount /dev/xvdf /data`          | Mount volume to folder                                |
+| `mkdir /data`                    | Create mount point                                    |
+| `chmod / chown`                  | Set permissions and ownership                         |
+| `cat /etc/fstab`                 | View persistent mount configuration                   |
+| `sudo growpart`                  | Extend disk partition (when resizing)                 |
+| `resize2fs` / `xfs_growfs`       | Resize filesystem on volume                           |
+
+## 💡 Quick Scenario Example
+You attach a new EBS volume /dev/xvdf and want to use it:
+```sh
+lsblk                              # See the volume
+sudo mkfs -t ext4 /dev/xvdf        # Format it
+sudo mkdir /data                   # Create folder to use it
+sudo mount /dev/xvdf /data         # Attach volume to folder
+df -h                              # Confirm it's mounted
+```
+To make it persist after reboot:
+```sh
+echo "/dev/xvdf /data ext4 defaults,nofail 0 2" | sudo tee -a /etc/fstab
+```
+
+## 🧠 Bonus Tips
+1. Don't format root volumes! Be careful with device names.
+
+2. Always backup important data before resizing or modifying volumes.
+
+3. You can use EBS snapshots for backup and restoration.
+
+
+# 💾 AWS EBS Volume Types – Notes and Use Cases
+
+Amazon EBS (Elastic Block Store) offers multiple types of volumes to match different workload needs. Here's a quick guide to each type, with simple explanations and when to use them.
+
+## 📚 Prerequisites: Basic Terms Explained
+
+
+
+### ⚡ What is IOPS (Input/Output Operations Per Second)?
+- It measures how fast the volume can read/write small chunks of data.
+- Higher IOPS = better performance for databases and real-time apps.
+- 📌 Example: If your database reads and writes 200 files per second, you need ~200 IOPS.
+
+### 🚀 What is Throughput?
+- It is the **total amount of data** (in MB/s) that can be transferred.
+- Useful for **large, sequential reads/writes** like data processing.
+- 📌 Example: Copying 1GB log files — throughput matters more than IOPS.
+
+### ⏱️ What is Latency?
+- The **delay** before a read/write operation starts.
+- Lower latency = faster response time.
+- 📌 Example: A database that needs instant access to each record benefits from low latency.
+
+---
+
+
+
+---
+
+## 📘 1. General Purpose SSD (gp3)
+
+### ✅ Use When:
+- You need **balanced performance and cost**.
+- Use for boot volumes, dev/test environments, low-latency apps.
+
+### 📊 Features:
+- Baseline performance of 3,000 IOPS.
+- You can provision IOPS and throughput separately from storage.
+
+### 🧠 Example Use Case:
+> Hosting a WordPress blog or running a web server.
+
+---
+
+## 📘 2. General Purpose SSD (gp2) [Legacy]
+
+### ✅ Use When:
+- Older volumes (still supported but gp3 is recommended).
+- Performance scales with size (up to 16,000 IOPS).
+
+### 🧠 Example Use Case:
+> Legacy systems or migration scenarios.
+
+---
+
+## 🚀 3. Provisioned IOPS SSD (io1 / io2)
+
+### ✅ Use When:
+- You need **high performance, low latency, and high durability**.
+- Designed for **I/O-intensive applications** like large databases.
+
+### 📊 Features:
+- io2 offers higher durability (99.999%).
+- Supports up to 64,000 IOPS per volume.
+
+### 🧠 Example Use Case:
+> Running an enterprise-grade production **MySQL, Oracle, or SAP HANA** database.
+
+---
+
+## 💽 4. Throughput Optimized HDD (st1)
+
+### ✅ Use When:
+- You need **high throughput** but not high IOPS.
+- Ideal for **big data** and **sequential workloads**.
+
+### 📊 Features:
+- Lower cost.
+- Cannot be used as a root volume.
+
+### 🧠 Example Use Case:
+> Processing logs, **Hadoop**, or **streaming data analytics**.
+
+---
+
+## 💾 5. Cold HDD (sc1)
+
+### ✅ Use When:
+- You have **rarely accessed, cold data**.
+- You want **the lowest cost** for infrequent I/O.
+
+### 📊 Features:
+- Very low cost per GB.
+- Lowest performance (but acceptable for cold storage).
+
+### 🧠 Example Use Case:
+> Long-term backups, old archives, infrequent log access.
+
+---
+
+## 📌 6. Magnetic (Standard) [Deprecated for new volumes]
+
+### ✅ Use When:
+- Legacy support only.
+- Not recommended for new use.
+
+---
+
+## 🧮 Summary Table
+
+| Volume Type | Storage Medium | IOPS | Throughput | Use Case |
+|-------------|----------------|------|------------|----------|
+| gp3         | SSD            | Up to 16,000 | Up to 1,000 MB/s | General-purpose apps |
+| gp2         | SSD            | Scales with size | Moderate | Legacy general-purpose |
+| io1/io2     | SSD            | Up to 64,000 | High | Databases & IOPS-intensive |
+| st1         | HDD            | Moderate | High | Big data, logs |
+| sc1         | HDD            | Low | Low | Cold storage, backups |
+| magnetic    | HDD            | Low | Low | Legacy only |
+
+---
+
+## 💡 Tips for Choosing a Volume
+
+- Use **gp3** for most general workloads – it's cost-effective and flexible.
+- Use **io2** if you're running **mission-critical databases**.
+- Use **st1** or **sc1** for large-scale, low-cost storage.
+- **Never use st1/sc1** for boot volumes — they’re not supported as root.
+
+---
+
+## 🧠 Quick Interview Pointers
+
+- **gp3 vs gp2?** → gp3 is newer, allows you to configure IOPS and throughput separately.
+- **io2 vs io1?** → io2 offers better durability (good for enterprise).
+- **st1 vs sc1?** → st1 is for throughput-heavy access, sc1 is for cold archival.
+- **Which can't be root?** → st1 and sc1 can't be used as root volumes.
+
+## 📚 Final Thought
+
+Choosing the right volume type is a tradeoff between **performance**, **cost**, and **access patterns**. For most users, **gp3** is a great starting point, and you can scale up to **io2** or switch to **st1/sc1** based on actual usage.
+
+# 🧩 Amazon EBS Snapshots
+
+## 📖 What is an EBS Snapshot?
+
+An **EBS snapshot** is a **point-in-time backup** of an EBS volume, stored in Amazon S3.
+
+- Snapshots are **incremental**: only changed blocks are saved after the first snapshot.
+- Can be used to **restore a volume** or **create a new volume** in the same or another region.
+
+---
+
+## ✅ Use Cases
+
+- Backup strategy for EBS volumes (databases, app servers).
+- Disaster recovery.
+- Clone an environment (dev/test).
+- Migrate data across regions.
+- Rollback before patching or upgrades.
+
+---
+
+## 🛠️ How to Create a Snapshot
+
+### ✅ Manual (via Console)
+
+1. Go to EC2 > Volumes.
+2. Select a volume.
+3. Click `Actions > Create Snapshot`.
+4. Add description and tags.
+
+### ✅ CLI
+
+```bash
+aws ec2 create-snapshot \
+  --volume-id vol-0123456789abcdef0 \
+  --description "My snapshot"
+
+```
+# 🔁 Automate Snapshot Creation
+
+## ✅ Option 1: Amazon Data Lifecycle Manager (DLM)
+Go to **EC2 Dashboard > Lifecycle Manager**.
+
+Create a policy to:
+- Target specific volume tags.
+- Set snapshot frequency (hourly, daily, etc.).
+- Retain for N days.
+
+## ✅ Option 2: AWS Backup
+- Unified backup service for EC2, EFS, RDS, etc.
+- More granular control and centralized reporting.
+
+---
+
+# 🗑️ Snapshot Recycle Bin (Delete Protection)
+
+## 🔒 What It Is:
+Lets you recover accidentally deleted snapshots within a defined retention period (1–30 days).
+
+## ✅ How to Use:
+- Go to **EC2 > Recycle Bin**.
+- Define rules by tag or resource type.
+- Deleted snapshots go to Recycle Bin before permanent deletion.
+
+# 🌍 Copy Snapshot to Another Region
+
+## ✅ Why:
+- Disaster recovery in another region.
+- Launching resources in a different region.
+
+## ✅ Console Steps:
+1. Go to **Snapshots**.
+2. Select snapshot > **Actions** > **Copy**.
+3. Choose **destination region** and configure **encryption**.
+
+
+# 🔐 Encrypting EBS Snapshots and Volumes
+
+## 🧩 When to Encrypt:
+- Compliance (HIPAA, PCI)
+- Security best practices
+- Encryption is done at-rest, in-transit, and during snapshot restore
+
+## ✅ Encryption Options:
+- Use AWS-managed KMS keys
+- Use your own customer-managed keys
+
+## 🔁 Behavior:
+- If you create a snapshot from an encrypted volume, the snapshot is encrypted.
+- If you create a volume from an encrypted snapshot, the new volume is encrypted.
+- ❗ You cannot change encryption status after creation — must copy snapshot and enable encryption.
+
+---
+
+# 📊 Advantages of Snapshots
+- Easy backup and recovery
+- Incremental — cost and time efficient
+- Cross-region copy for disaster recovery
+- Can be shared with other AWS accounts
+- Can restore into any AZ or region
+
+---
+
+# ⚠️ Disadvantages
+- Not real-time backup (point-in-time only)
+- Initial snapshot may take time and bandwidth
+- Encrypted snapshots can’t be shared publicly
+- Must manually manage lifecycle if not using DLM
+
+---
+
+# 🧠 Interview & Revision Cheat Sheet
+
+| Feature                    | Key Point                                       |
+|----------------------------|-------------------------------------------------|
+| Snapshot type              | Point-in-time backup of EBS volume              |
+| Incremental                | Yes – only changed data is saved               |
+| Automation tools           | DLM, AWS Backup                                |
+| Cross-region copy          | Yes – for DR                                   |
+| Encryption                 | At-rest and in-transit using KMS               |
+| Recycle Bin                | Recover snapshots within 1–30 days             |
+| Share snapshot             | Only unencrypted (or encrypted within same org)|
+| Restore volume from snapshot | Can restore in any AZ/region                 |
+
+---
+
+# 💡 Best Practices
+- Tag volumes for automation policies (e.g., `"Backup=true"`)
+- Use DLM or AWS Backup for retention and lifecycle
+- Regularly copy critical snapshots to another region
+- Use encrypted volumes for sensitive workloads
