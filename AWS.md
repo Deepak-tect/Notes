@@ -1231,3 +1231,103 @@ Lets you recover accidentally deleted snapshots within a defined retention perio
 - Use DLM or AWS Backup for retention and lifecycle
 - Regularly copy critical snapshots to another region
 - Use encrypted volumes for sensitive workloads
+
+
+
+# 🧱 Amazon Machine Image (AMI) 
+
+## 📖 What is an AMI?
+
+An **Amazon Machine Image (AMI)** is a **pre-configured template** used to launch EC2 instances.
+
+It includes:
+- **Operating system** (e.g., Ubuntu, Amazon Linux).
+- **Application server** (e.g., Apache, Nginx).
+- **Custom software** and configuration.
+- **EBS volume snapshots**.
+
+An AMI serves as a **blueprint** for your EC2 instances.
+
+---
+
+## ✅ Use Cases
+
+- 🔄 **Reproducibility**: Launch multiple identical instances from the same AMI.
+- 🚀 **Faster deployments**: Bootstraps with OS, software, configs pre-installed.
+- 🔒 **Disaster recovery**: Take an AMI of a working instance for rollback.
+- 📤 **Environment sharing**: Share AMIs with other AWS accounts.
+- 🌍 **Cross-region replication**: Copy AMI across regions for geo-deployments.
+
+---
+
+## 🛠️ How to Create an AMI from an EC2 Instance
+
+### ✅ Console:
+
+1. Go to **EC2 > Instances**.
+2. Select an instance.
+3. Click `Actions > Image > Create image`.
+4. Give it a name, description, and choose:
+   - Whether to reboot the instance (recommended).
+   - Which EBS volumes to include.
+5. Click **Create Image**.
+
+### ✅ CLI:
+
+```bash
+aws ec2 create-image \
+  --instance-id i-0123456789abcdef0 \
+  --name "MyApp-Image" \
+  --no-reboot
+```
+
+## 🧱 Using an AMI to Launch an Instance
+* Go to EC2 > AMIs.
+
+* Select your AMI and click Launch Instance.
+
+* Choose instance type, configure settings, and launch.
+
+## 🗑️ How to Delete an AMI
+Deleting an AMI involves two steps:
+
+1. Deregister the AMI:
+
+   * Console: EC2 > AMIs > Select AMI > Actions > Deregister.
+
+2. Delete associated snapshots:
+
+   * After deregistering, go to Snapshots, find the ones used by your AMI, and delete them manually.
+
+## 📊 AMI Types
+
+| Type            | Description                                   |
+| --------------- | --------------------------------------------- |
+| Public AMI      | Available to all AWS users.                   |
+| Private AMI     | Visible only to the AMI owner.                |
+| Shared AMI      | Shared with specific AWS accounts.            |
+| AWS Marketplace | Provided by vendors or AWS for paid/free use. |
+
+
+# 📌 Advantages & Disadvantages of AMIs
+
+## ✅ Advantages
+- Launch consistent, pre-configured environments.
+- Save time with pre-installed software.
+- Useful for auto-scaling and rolling updates.
+- Can be shared or copied across accounts/regions.
+
+## ⚠️ Disadvantages
+- ❌ AMIs can become outdated; need to manage versions.
+- ❌ Storage cost for AMIs (EBS snapshots).
+- ❌ Manual snapshot deletion if not automated.
+
+---
+
+# 💡 Interview Tips
+
+- **What is an AMI?** → It's a template to launch EC2 instances.
+- **What’s in an AMI?** → OS, configs, app server, optional apps.
+- **How to create an AMI?** → From a running EC2 instance.
+- **What happens on deletion?** → AMI is deregistered; you must manually delete snapshots.
+- **Can AMIs be shared?** → Yes, with specific accounts or publicly.
