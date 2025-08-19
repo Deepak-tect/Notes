@@ -1051,6 +1051,222 @@ If a Deployment specifies `replicas: 3`:
 ```bash
 kubectl logs -n kube-system kube-proxy-<node-name>
 ```
+
+# Kubernetes Scheduling and Pod Placement — Detailed Notes
+
+## 1. Static Pods
+- **Definition:** Static Pods are managed directly by the kubelet on a node, not by the API Server.  
+- **Use Case:** Typically used to run control plane components (like kube-apiserver, etcd) in clusters set up with `kubeadm` or manually.  
+- **Characteristics:**
+  - Defined in a manifest file placed in `/etc/kubernetes/manifests/` (default path).  
+  - Kubelet monitors this directory and automatically starts/stops pods if the manifest changes.  
+  - They **do not go through the scheduler**.  
+  - Appear on the API Server as "Mirror Pods" for visibility.  
+- **Example:** Running kube-apiserver as a static pod on a control-plane node.
+
+---
+
+## 2. Manual Scheduling
+- **Definition:** The process of scheduling pods without using the Kubernetes scheduler.  
+- **How:** Create a Pod manifest and set `nodeName` explicitly.  
+- **Example:**
+  ```yaml
+  apiVersion: v1
+  kind: Pod
+  metadata:
+    name: manual-pod
+  spec:
+    containers:
+    - name: nginx
+      image: nginx
+    nodeName: worker-node1
+  ```
+- **When to Use:** Testing, debugging scheduling behavior, or when precise control is required.
+
+---
+
+## 3. Taints and Tolerations
+- **Taints (applied on nodes):** Prevent pods from being scheduled unless they tolerate the taint.  
+  ```bash
+  kubectl taint nodes node1 key=value:NoSchedule
+  ```  
+- **Tolerations (applied on pods):** Allow pods to be scheduled on tainted nodes.  
+  ```yaml
+  tolerations:
+  - key: "key"
+    operator: "Equal"
+    value: "value"
+    effect: "NoSchedule"
+  ```
+- **Effects:**
+  - `NoSchedule`: Pod will not be scheduled on the node.  
+  - `PreferNoSchedule`: Scheduler will try to avoid placing pods but not guaranteed.  
+  - `NoExecute`: New pods not scheduled, existing pods evicted if they don’t tolerate.  
+- **Use Case:** Isolating workloads (e.g., dedicating GPU nodes for ML workloads).
+
+---
+
+## 4. Node Selectors
+- **Definition:** A simple way to constrain pods to specific nodes using labels.  
+- **Example:**
+  ```yaml
+  spec:
+    nodeSelector:
+      disktype: ssd
+  ```
+- **Limitation:** Only supports exact match labels (no complex expressions).
+
+---
+
+## 5. Node Affinity
+- **Definition:** Advanced form of scheduling constraints, similar to nodeSelector but with more expressive rules.  
+- **Types:**
+  - **RequiredDuringSchedulingIgnoredDuringExecution** → Must match (hard requirement).  
+  - **PreferredDuringSchedulingIgnoredDuringExecution** → Best effort (soft requirement).  
+- **Example:**
+  ```yaml
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: disktype
+            operator: In
+            values:
+            - ssd
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 1
+        preference:
+          matchExpressions:
+          - key: region
+            operator: In
+            values:
+            - us-east1
+  ```
+- **Advantages over Node Selector:**
+  - Supports operators like `In`, `NotIn`, `Exists`, `DoesNotExist`.  
+  - Allows soft preferences.  
+
+---
+
+# ✅ Summary
+- **Static Pods** → Managed by kubelet, not scheduler.  
+- **Manual Scheduling** → Set `nodeName` explicitly in pod spec.  
+- **Taints & Tolerations** → Node-level restrictions with pod-level exemptions.  
+- **Node Selector** → Simple label-based hard matching.  
+- **Node Affinity** → Advanced, flexible scheduling with hard & soft rules.  
+
+# Kubernetes Cluster Upgrade and etcd Backup/Restore
+
+## 1. Cluster Upgrade - 
+#### https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
+
+### Overview
+- Upgrading a Kubernetes cluster ensures you get new features, bug fixes, and security patches.  
+- In production, upgrades should be carefully planned and tested.  
+- Tools like **kubeadm** provide a structured upgrade workflow.
+
+### Upgrade Workflow with kubeadm
+1. **Plan Upgrade**
+   ```bash
+   kubeadm upgrade plan
+   ```
+   - Shows available versions.  
+   - Displays components to upgrade.
+
+2. **Upgrade Control Plane Node**
+   - Drain the control plane node:
+     ```bash
+     kubectl drain <control-plane-node> --ignore-daemonsets
+     ```
+   - Upgrade kubeadm tool:
+     ```bash
+     apt-get update && apt-get install -y kubeadm=<version>
+     ```
+   - Apply upgrade:
+     ```bash
+     kubeadm upgrade apply <version>
+     ```
+   - Upgrade kubelet and kubectl:
+     ```bash
+     apt-get install -y kubelet=<version> kubectl=<version>
+     systemctl daemon-reload
+     systemctl restart kubelet
+     ```
+   - Uncordon the node:
+     ```bash
+     kubectl uncordon <control-plane-node>
+     ```
+
+3. **Upgrade Worker Nodes**
+   - Drain node:
+     ```bash
+     kubectl drain <worker-node> --ignore-daemonsets
+     ```
+   - Upgrade kubeadm, kubelet, kubectl (same as control plane).  
+   - Restart kubelet.  
+   - Uncordon node:
+     ```bash
+     kubectl uncordon <worker-node>
+     ```
+
+### Best Practices
+- Upgrade one node at a time.  
+- Always test in a staging environment first.  
+- Monitor workloads during upgrade.  
+- Ensure **etcd backup** is taken before starting upgrade.
+
+---
+
+## 2. etcd Backup and Restore
+
+#### https://discuss.kubernetes.io/t/backup-and-restore-etcd-database/12889
+
+### Overview
+- **etcd** is Kubernetes’ primary datastore — stores cluster state and configuration.  
+- Backup and restore is critical for disaster recovery.  
+
+### Backup etcd
+1. Run etcdctl snapshot save:
+   ```bash
+   ETCDCTL_API=3 etcdctl      --endpoints=https://127.0.0.1:2379      --cacert=/etc/kubernetes/pki/etcd/ca.crt      --cert=/etc/kubernetes/pki/etcd/server.crt      --key=/etc/kubernetes/pki/etcd/server.key      snapshot save /opt/snapshot.db
+   ```
+
+2. Verify snapshot:
+   ```bash
+   ETCDCTL_API=3 etcdctl snapshot status /opt/snapshot.db
+   ```
+
+### Restore etcd
+1. Stop kube-apiserver (so it doesn’t connect to etcd during restore).  
+2. Run restore command:
+   ```bash
+   ETCDCTL_API=3 etcdctl snapshot restore /opt/snapshot.db      --data-dir=/var/lib/etcd-from-backup
+   ```
+3. Update etcd manifest (usually `/etc/kubernetes/manifests/etcd.yaml`) to point to new data directory:  
+   ```yaml
+   --data-dir=/var/lib/etcd-from-backup
+   ```
+4. kubelet will restart etcd with restored data.  
+5. Start kube-apiserver again and verify cluster state.
+
+### Best Practices
+- Automate periodic etcd snapshots.  
+- Store backups in remote storage (S3, GCS, etc.).  
+- Test restore procedures regularly.  
+- Always back up before upgrades or major changes.
+
+---
+
+# ✅ Summary
+- **Cluster Upgrade** → Use `kubeadm upgrade`, upgrade control plane first, then worker nodes, drain & uncordon properly.  
+- **etcd Backup** → Use `etcdctl snapshot save`, verify with `snapshot status`.  
+- **etcd Restore** → Use `snapshot restore`, update `etcd.yaml` manifest, restart kubelet.  
+- **Best Practice** → Always take etcd backup before cluster upgrade.  
+
+
+
+
 # Cheat sheet
 ```sh
 1. Kubect config use-context <cluster-name>
